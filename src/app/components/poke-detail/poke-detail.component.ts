@@ -1,43 +1,56 @@
-import { Component, OnInit } from '@angular/core';
-import { PokemonService } from 'src/app/services/pokemon.service';
-import { ActivatedRoute } from '@angular/router';
+import {Component, OnDestroy, OnInit} from '@angular/core';
+import {PokemonService} from 'src/app/services/pokemon.service';
+import {ActivatedRoute} from '@angular/router';
+import {Pokemon} from '../../models/pokemon.model';
+import {Subscription} from 'rxjs';
 
 @Component({
-  selector: 'app-poke-detail',
-  templateUrl: './poke-detail.component.html',
-  styleUrls: ['./poke-detail.component.scss']
+    selector: 'app-poke-detail',
+    templateUrl: './poke-detail.component.html',
+    styleUrls: ['./poke-detail.component.scss']
 })
-export class PokeDetailComponent implements OnInit {
+export class PokeDetailComponent implements OnInit, OnDestroy {
 
-  pokemon: any = '';
-  pokemonImg = '';
-  pokemonType = [];
+    pokemon: Pokemon | null = null;
+    pokemonImg: string | null = null;
+    pokemonType: string | null = null;
 
-  constructor(private activatedRouter: ActivatedRoute,
-    private pokemonService: PokemonService) {
+    subscription = new Subscription();
 
-    this.activatedRouter.params.subscribe(
-      params => {
-        this.getPokemon(params['id']);
-      }
-    )
-  }
+    constructor(private activatedRouter: ActivatedRoute,
+                private pokemonService: PokemonService) {
 
-  ngOnInit(): void {
-  }
+        // for every subscribe, we need to unsubscribe
+        this.subscription.add(
+            this.activatedRouter.params.subscribe(
+                params => {
+                    this.getPokemon(params['id']);
+                }
+            )
+        );
+    }
 
-  getPokemon(id) {
-    this.pokemonService.getPokemons(id).subscribe(
-      res => {
-        console.log(res);
-        this.pokemon = res;
-        this.pokemonImg = this.pokemon.sprites.front_default;
-        this.pokemonType = res.types[0].type.name;
-      },
-      err => {
-        console.log(err);
-      }
-    )
-  }
+    ngOnDestroy(): void {
+        this.subscription.unsubscribe();
+    }
+
+    // FIXME: Remove empty onInit
+    ngOnInit(): void {
+    }
+
+    getPokemon(id) {
+        // FIXME: for every subscribe, we need to unsubscribe
+        this.pokemonService.getPokemons(id).subscribe(
+            res => {
+                console.log(res);
+                this.pokemon = res;
+                this.pokemonImg = this.pokemon.sprites.front_default;
+                this.pokemonType = res.types[0].type.name;
+            },
+            err => {
+                console.log(err);
+            }
+        );
+    }
 
 }
